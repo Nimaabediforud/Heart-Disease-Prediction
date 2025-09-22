@@ -94,6 +94,16 @@ class preprocessor:
     
 
     def oldpeak_preprocessor(self, oldpeak_col, X_train, X_val):
+        """
+        Replace negative values in 'Oldpeak' column with 0.
+        
+        Args:
+            oldpeak_col (str): Column name for oldpeak values.
+            X_train, X_val (pd.DataFrame): Features for training and validation.
+        
+        Returns:
+            tuple: Updated (X_train, X_val)
+        """
         # Filter X_train
         X_train[oldpeak_col] = X_train[oldpeak_col].apply(lambda x: 0 if x < 0 else x)
 
@@ -105,14 +115,14 @@ class preprocessor:
 
     def cholesterol_imputer(self, cholesterol_col, X_train, X_val):
         """
-        Replace negative values in 'Oldpeak' column with 0.
+        Impute missing or zero cholesterol values with the median.
         
         Args:
-            oldpeak_col (str): Column name for oldpeak values.
+            choleterol_col (str): Column name for cholesterol.
             X_train, X_val (pd.DataFrame): Features for training and validation.
         
         Returns:
-            tuple: Updated (X_train, X_val)
+            tuple: Updated (X_train, X_val) with imputed cholesterol.
         """
         # Convert zeros into Nan
         X_train[cholesterol_col] = X_train[cholesterol_col].replace(0, np.nan)
@@ -132,14 +142,14 @@ class preprocessor:
 
     def feature_scaler(self, continuous_num_features, X_train, X_val):
         """
-        Impute missing or zero cholesterol values with the median.
+        Scale continuous numerical features using StandardScaler.
         
         Args:
-            choleterol_col (str): Column name for cholesterol.
+            continuous_num_features (list): List of continuous numeric feature names.
             X_train, X_val (pd.DataFrame): Features for training and validation.
         
         Returns:
-            tuple: Updated (X_train, X_val) with imputed cholesterol.
+            tuple: (X_train_scaled, X_val_scaled)
         """
         # Define StandardScaler
         std_scaler = StandardScaler()

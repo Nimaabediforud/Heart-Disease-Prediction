@@ -21,7 +21,6 @@ def skewness_detector(num_cols):
 #-------------------------------------------
 # Find potential outliers in numeric values
 #-------------------------------------------
-
 def outlier_detector(num_cols):
     # IQR method (1.5 * IQR) 
     outlier_info = [] 
