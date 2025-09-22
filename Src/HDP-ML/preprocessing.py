@@ -1,12 +1,8 @@
-#----- Tools, visualizers -----
-import pandas as pd
-import numpy as np
-
-#----- Preprocessing -----
+from sklearn.preprocessing import LabelEncoder, OneHotEncoder, OrdinalEncoder, StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import LabelEncoder, OneHotEncoder, OrdinalEncoder, StandardScaler
-
+import pandas as pd
+import numpy as np
 
 
 class preprocessor:
@@ -15,7 +11,7 @@ class preprocessor:
     cleaning, transforming, and encoding data for the Heart Disease Predictor project.
     """
 
-    def __init__(self, test_size=0.2, random_state=42):
+    def __init__(self, test_size=0.15, random_state=42):
         """
         Initialize the preprocessor with default split parameters.
         
@@ -107,7 +103,7 @@ class preprocessor:
         return (X_train, X_val)
     
 
-    def cholesterol_imputer(self, choleterol_col, X_train, X_val):
+    def cholesterol_imputer(self, cholesterol_col, X_train, X_val):
         """
         Replace negative values in 'Oldpeak' column with 0.
         
@@ -119,17 +115,17 @@ class preprocessor:
             tuple: Updated (X_train, X_val)
         """
         # Convert zeros into Nan
-        X_train[choleterol_col] = X_train[choleterol_col].replace(0, np.nan)
-        X_val[choleterol_col] = X_val[choleterol_col].replace(0, np.nan)
+        X_train[cholesterol_col] = X_train[cholesterol_col].replace(0, np.nan)
+        X_val[cholesterol_col] = X_val[cholesterol_col].replace(0, np.nan)
 
         # Define median imputer
         median_imputer = SimpleImputer(strategy='median')
 
         # Apply on X_train
-        X_train[choleterol_col] = median_imputer.fit_transform(X_train[[choleterol_col]])
+        X_train[cholesterol_col] = median_imputer.fit_transform(X_train[[cholesterol_col]])
 
         # Apply on X_val
-        X_val[choleterol_col] = median_imputer.transform(X_val[[choleterol_col]])
+        X_val[cholesterol_col] = median_imputer.transform(X_val[[cholesterol_col]])
 
         return (X_train, X_val)
 
@@ -261,4 +257,81 @@ class preprocessor:
         return (final_X_train, final_X_val)
     
 
+    def run_preprocessing(self, filepath, target_col, resting_bp_col,
+                           oldpeak_col, cholesterol_col, continuous_num_features,
+                           bin_features, nom_features, ord_features, ord_categories):
+        """
+        Complete preprocessing pipeline for the dataset.
 
+        This function executes all preprocessing steps sequentially:
+        1. Load data from a CSV file.
+        2. Split data into training and validation sets.
+        3. Preprocess RestingBP feature (remove invalid 0 values).
+        4. Preprocess Oldpeak feature (replace negative values with 0).
+        5. Impute missing or zero values in Cholesterol feature using median.
+        6. Scale and standardize continuous numeric features.
+        7. Encode categorical features (binary, nominal, ordinal) and combine all
+        processed features into final training and validation sets.
+
+        Parameters:
+        -----------
+        filepath : str
+            Path to the CSV file containing the dataset.
+        target_col : str
+            Name of the target/label column in the dataset.
+        resting_bp_col : str
+            Name of the RestingBP column to preprocess.
+        oldpeak_col : str
+            Name of the Oldpeak column to preprocess.
+        cholesterol_col : str
+            Name of the Cholesterol column for median imputation.
+        continuous_num_features : list of str
+            List of continuous numeric feature column names to be scaled.
+        bin_features : list of str
+            List of binary categorical feature column names for label encoding.
+        nom_features : list of str
+            List of nominal categorical feature column names for one-hot encoding.
+        ord_features : list of str
+            List of ordinal categorical feature column names for ordinal encoding.
+        ord_categories : list of list
+            List containing the order of categories for each ordinal feature.
+
+        Returns:
+        --------
+        final_X_train : pd.DataFrame
+            Preprocessed and encoded training features.
+        final_X_val : pd.DataFrame
+            Preprocessed and encoded validation features.
+        y_train : pd.Series
+            Training labels.
+        y_val : pd.Series
+            Validation labels.
+        """
+
+        # Load data
+        data = self.load_data(filepath)
+
+        # Split data into train and validation sets
+        X_train, X_val, y_train, y_val = self.split_data(data, target_col)
+
+        # Preprocess RestingBP feature
+        X_train, X_val, y_train, y_val = self.resting_bp_preprocessor(
+            resting_bp_col, X_train,
+            X_val, y_train, y_val
+            )
+        # Preprocess Oldpeak feature
+        X_train, X_val = self.oldpeak_preprocessor(oldpeak_col, X_train, X_val)
+
+        # Impute Nan or Zero values of Cholesterol feature
+        X_train, X_val = self.cholesterol_imputer(cholesterol_col, X_train, X_val)
+
+        # Scale / Standardize continuous numeric features
+        X_train_scaled, X_val_scaled = self.feature_scaler(continuous_num_features, X_train, X_val)
+
+        # Encode categorical features, combine all the changes into the final dataframe
+        final_X_train, final_X_val = self.cat_features_encoder(bin_features, nom_features,
+                                                                ord_features, ord_categories,
+                                                                  X_train_scaled, X_val_scaled, X_train, X_val)
+        
+        return (final_X_train, final_X_val, y_train, y_val)
+    
