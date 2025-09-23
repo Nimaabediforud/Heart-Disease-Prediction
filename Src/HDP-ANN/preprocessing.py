@@ -53,7 +53,7 @@ class preprocessor:
 
         # Split
         X_train, X_val, y_train, y_val = train_test_split(
-            X, y, test_size=0.15 , random_state=self.random_state, stratify=y
+            X, y, test_size=self.test_size , random_state=self.random_state, stratify=y
         )
         return (X_train, X_val, y_train, y_val)
     
@@ -309,13 +309,13 @@ class preprocessor:
 
         Returns:
         --------
-        final_X_train : pd.DataFrame
+        final_X_train : np.ndarray
             Preprocessed and encoded training features.
-        final_X_val : pd.DataFrame
+        final_X_val : np.ndarray
             Preprocessed and encoded validation features.
-        y_train : pd.Series
+        y_train : np.ndarray
             Training labels.
-        y_val : pd.Series
+        y_val : np.ndarray
             Validation labels.
         """
 
