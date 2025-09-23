@@ -15,20 +15,20 @@ The project highlights **the end-to-end workflow of data preprocessing, model bu
 ## Project Structure
 
 The project is organized as follows:
-
+```
 Heart-Disease-Prediction/
 │
 ├── Data/
-│ └── dataset.csv # Original heart disease dataset
+│ └── dataset.csv   # Original heart disease dataset
 │
 ├── Models/
-│ └── trained_models/ # Saved machine learning and ANN models
+│ └── trained models # Saved machine learning and ANN 
 │
 ├── Notebooks/
-│ ├── EDA.ipynb # Exploratory Data Analysis
-│ ├── HDP-ML.ipynb # Traditional Machine Learning workflow
-│ ├── HDP-ANN.ipynb # Artificial Neural Network workflow
-│ └── utils.py # Utility functions used across notebooks
+│ ├── EDA.ipynb   # Exploratory Data Analysis
+│ ├── HDP-ML.ipynb   # Traditional Machine Learning workflow
+│ ├── HDP-ANN.ipynb   # Artificial Neural Network workflow
+│ └── utils.py   # Utility functions used across notebooks
 │
 ├── Src/
 │ ├── HDP-ML/
@@ -40,10 +40,10 @@ Heart-Disease-Prediction/
 │ ├── preprocessing.py
 │ └── training.py
 │
-├── README.md # Project documentation
-├── requirements.txt # Project dependencies
-└── LICENSE # License for the project
-
+├── README.md   # Project documentation
+├── requirements.txt   # Project dependencies
+└── LICENSE   # License for the project
+```
 ## Data Description
 
 The project uses a dataset containing patient information and heart disease indicators. The dataset is provided as a CSV file located in the `data/` folder. It includes both numerical and categorical features that describe patient demographics, medical history, and clinical measurements.  
@@ -100,12 +100,12 @@ The project uses a dataset containing patient information and heart disease indi
    Place the dataset CSV file in the `data/` folder.
 
 2. **Preprocessing:**  
-   Use the preprocessing scripts in `source/HDP-ML/preprocessing.py` and `source/HDP-ANN/preprocessing.py` to process the data.  
+   Use the preprocessing scripts in `Src/HDP-ML/preprocessing.py` and `Src/HDP-ANN/preprocessing.py` to process the data.  
    This includes scaling continuous features, encoding categorical features, and handling missing or invalid values.
 
 3. **Training the Models:**  
-   - For traditional ML models, use the training scripts in `source/HDP-ML/training.py`.  
-   - For neural networks, use the scripts in `source/HDP-ANN/training.py`.  
+   - For traditional ML models, use the training scripts in `Src/HDP-ML/training.py`.  
+   - For neural networks, use the scripts in `Src/HDP-ANN/training.py`.  
 
 4. **Evaluation:**  
    Evaluate models using the provided evaluation functions. Metrics include F1 Score, accuracy, confusion matrix, and classification reports.
@@ -143,7 +143,7 @@ In this project, we implemented two approaches to predict whether a patient has 
 
 ## References / Acknowledgments
 
-- **Dataset**: The dataset used in this project is from [Heart Failure Prediction Dataset]([text](https://www.kaggle.com/datasets/fedesoriano/heart-failure-prediction)). It contains patient health metrics and indicators relevant to heart disease prediction.  
-- **Libraries and Tools**: This project leverages Python libraries such as `pandas`, `numpy`, `scikit-learn`, `tensorflow`, `matplotlib`, and `seaborn` for data preprocessing, model training, evaluation, and visualization.  
+- **Dataset**: The dataset used in this project is from [Heart Failure Prediction Dataset](https://www.kaggle.com/datasets/fedesoriano/heart-failure-prediction). It contains patient health metrics and indicators relevant to heart disease prediction.  
+- **Libraries and Tools**: This project leverages Python libraries such as `pandas`, `numpy`, `scipy`, `scikit-learn`, `tensorflow`, `joblib`, `matplotlib`, and `seaborn` for data preprocessing, model training, evaluation, and visualization.  
 - **Inspiration & Learning**: The project workflow and techniques were guided by standard practices in machine learning and deep learning, including feature scaling, encoding, stacking classifiers, neural network design, and evaluation strategies.  
 
