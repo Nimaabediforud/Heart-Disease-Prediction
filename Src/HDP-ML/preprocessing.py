@@ -53,7 +53,7 @@ class preprocessor:
 
         # Split
         X_train, X_val, y_train, y_val = train_test_split(
-            X, y, test_size=0.15 , random_state=self.random_state, stratify=y
+            X, y, test_size=self.test_size , random_state=self.random_state, stratify=y
         )
         return (X_train, X_val, y_train, y_val)
     
