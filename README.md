@@ -69,10 +69,12 @@ The project uses a dataset containing patient information and heart disease indi
 - **Comprehensive Heart Disease Prediction:**  
   Implements both traditional machine learning models and artificial neural networks to predict the presence of heart disease based on patient features.
 
-- **Data Preprocessing Pipelines:**  
+- **Data Preprocessing:**  
   - Scaling of continuous features using `StandardScaler` & `MinMaxScaler`.  
   - Encoding of categorical features (binary, nominal, and ordinal).  
   - Handling of missing or incorrect values in key medical features.
+  
+    > I tried to handle each step `manually` to better understand how different preprocessing techniques work and how they affect the data and the model’s performance. I wanted to experiment with them myself and learn how to manage data transformations and scaling without relying on ready-to-use tools(scikit-learn `Pipeline` / `ColumnTransformer`). I also wrote a couple of custom classes for preprocessing(within `src/HDP-ML/preprocessing.py` and `src/HDP-ANN/preprocessing.py`), just to practice how these processes can be built from scratch in code. Of course, the easiest and most professional way to handle this would be to use **pipelines**; In fact, That's what should be done. I kept it manual to focus more on the learning process and the details behind each step.
 
 - **Machine Learning Models (HDP-ML):**  
   - Stacking Classifier combining Random Forest, Gradient Boosting, AdaBoost, Extra Trees, and SVC.  
