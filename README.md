@@ -9,9 +9,6 @@
 
 ---
 
-A machine learning project designed to predict the likelihood of heart disease based on clinical and physiological data using Python and TensorFlow.
-
-
 ## Overview / Objective
 
 This project focuses on predicting whether a patient has heart disease based on clinical and demographic features.
