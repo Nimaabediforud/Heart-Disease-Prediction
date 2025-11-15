@@ -1,5 +1,14 @@
 # Heart Disease Prediction Project (ML & ANN)
 
+![Python](https://img.shields.io/badge/Python-3.9%2B-blue?logo=python&logoColor=white)
+![TensorFlow](https://img.shields.io/badge/TensorFlow-2.x-orange?logo=tensorflow&logoColor=white)
+![Scikit--learn](https://img.shields.io/badge/Scikit--learn-1.x-blue?logo=scikit-learn)
+![Pandas](https://img.shields.io/badge/Pandas-Data%20Analysis-success?logo=pandas)
+![License](https://img.shields.io/github/license/Nimaabediforud/Heart-Disease-Prediction)
+![Status](https://img.shields.io/badge/Status-Completed-success?style=flat-square)
+
+---
+
 ## Overview / Objective
 
 This project focuses on predicting whether a patient has heart disease based on clinical and demographic features.
