@@ -12,7 +12,7 @@ def skewness_detector(num_cols):
     # Melt (for better inspection)
     skewness = pd.melt(skewness, var_name='Feature', value_name='Skewness')
     # Check if skewness is exceeding the threshold (skewness >= 1)
-    skewness['Exceeding_Threshold'] = skewness['Skewness'] >= 1
+    skewness['Skewness_Exceeding_Threshold'] = skewness['Skewness'] >= 1
     return skewness
 
 
@@ -44,7 +44,7 @@ def outlier_detector(num_cols):
 
     # Convert to dataframe
     outlier_df = pd.DataFrame(outlier_info,
-                            columns=['feature', 'n_outliers', 'outlier_pct']).sort_values('outlier_pct', ascending=False) 
+                           columns=['Feature', 'N_outliers', 'Outlier_pct']).sort_values(by="Outlier_pct", ascending=False)
     return outlier_df
 
 
