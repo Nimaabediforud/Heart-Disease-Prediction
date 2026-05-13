@@ -1,145 +1,117 @@
-from sklearn.preprocessing import LabelEncoder, OneHotEncoder, OrdinalEncoder, MinMaxScaler
+"""
+Preprocessing module for Heart Disease Prediction (ANN).
+
+Provides the preprocessor class that handles:
+- Data loading and splitting
+- Domain-specific medical cleaning (row-level RestingBP removal,
+  column-level Oldpeak clipping, Cholesterol zero → NaN conversion)
+- Building a full scikit-learn preprocessing pipeline (column cleaning +
+  feature engineering with MinMax scaling, imputation, encoding)
+- Applying the pipeline to training and validation sets
+"""
+
+from sklearn.preprocessing import OrdinalEncoder, OneHotEncoder, MinMaxScaler
 from sklearn.model_selection import train_test_split
 from sklearn.impute import SimpleImputer
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 import pandas as pd
 import numpy as np
+from src_utils import MedicalColumnCleaner
 
 
 class preprocessor:
     """
-    Preprocessing utility for ANN that handles data cleaning (outside pipeline)
-    and builds a ColumnTransformer using MinMaxScaler for neural networks.
+    Handles all data preparation steps for the heart disease classification task
+    using artificial neural networks. Uses MinMaxScaler for continuous features.
+
+    Parameters
+    ----------
+    test_size : float, default=0.15
+        Proportion of the dataset to use as validation.
+    random_state : int, default=42
+        Random seed for reproducibility.
     """
 
     def __init__(self, test_size=0.15, random_state=42):
         self.test_size = test_size
         self.random_state = random_state
-        self._column_transformer = None  # fitted later
+        self._full_preprocessor = None
 
     def load_data(self, filepath):
-        """Load CSV dataset."""
+        """Load CSV dataset. (See ML version for full docstring.)"""
         return pd.read_csv(filepath)
 
     def split_data(self, df, target_col):
-        """Split into stratified train/validation sets."""
+        """Split into stratified train/validation sets. (See ML version.)"""
         X = df.drop(columns=target_col)
         y = df[target_col]
         X_train, X_val, y_train, y_val = train_test_split(
-            X, y,
-            test_size=self.test_size,
-            random_state=self.random_state,
-            stratify=y
+            X, y, test_size=self.test_size, random_state=self.random_state, stratify=y
         )
         return X_train, X_val, y_train, y_val
 
-    # ------------------------------------------------------------------
-    # Pre‑pipeline cleaning steps (row-level operations)
-    # ------------------------------------------------------------------
-    def resting_bp_preprocessor(self, resting_bp_col, X_train, X_val, y_train, y_val):
-        """Remove rows where RestingBP == 0."""
-        mask_t = X_train[resting_bp_col] != 0
-        mask_v = X_val[resting_bp_col] != 0
+    def drop_invalid_resting_bp(self, X, y, resting_bp_col='RestingBP'):
+        """Remove rows with RestingBP == 0. (See ML version.)"""
+        mask = X[resting_bp_col] != 0
+        return X[mask].reset_index(drop=True), y[mask].reset_index(drop=True)
 
-        X_train = X_train[mask_t].reset_index(drop=True)
-        y_train = y_train[mask_t].reset_index(drop=True)
-        X_val = X_val[mask_v].reset_index(drop=True)
-        y_val = y_val[mask_v].reset_index(drop=True)
-        return X_train, X_val, y_train, y_val
-
-    def oldpeak_preprocessor(self, oldpeak_col, X_train, X_val):
-        """Clip negative Oldpeak values to 0."""
-        X_train[oldpeak_col] = X_train[oldpeak_col].clip(lower=0)
-        X_val[oldpeak_col] = X_val[oldpeak_col].clip(lower=0)
-        return X_train, X_val
-
-    def cholesterol_imputer(self, cholesterol_col, X_train, X_val):
-        """
-        Convert zero cholesterol values to NaN – actual imputation will be done
-        by the pipeline using median strategy.
-        """
-        X_train[cholesterol_col] = X_train[cholesterol_col].replace(0, np.nan)
-        X_val[cholesterol_col] = X_val[cholesterol_col].replace(0, np.nan)
-        return X_train, X_val
-
-    # ------------------------------------------------------------------
-    # Pipeline builder – **MinMaxScaler** is the key difference from ML
-    # ------------------------------------------------------------------
     def build_preprocessor(self, con_num_features, bin_features,
-                           nom_features, ord_features, ord_categories):
-        """
-        Create the ColumnTransformer with MinMaxScaler (suited for neural nets).
-        """
-        # Continuous numeric pipeline – MinMaxScaler instead of StandardScaler
+                           nom_features, ord_features, ord_categories,
+                           oldpeak_col='Oldpeak', cholesterol_col='Cholesterol'):
+        """Build full preprocessing pipeline with MinMaxScaler."""
         con_num_Pipeline = Pipeline([
             ("imputer", SimpleImputer(strategy="median")),
-            ("scaler", MinMaxScaler())
+            ("scaler", MinMaxScaler())          # ← ANN uses MinMaxScaler
         ])
 
-        # Binary categorical
         bin_Pipeline = Pipeline([
             ("imputer", SimpleImputer(strategy="most_frequent")),
             ("oe_encoder", OrdinalEncoder())
         ])
 
-        # Nominal categorical
         nom_Pipeline = Pipeline([
             ("imputer", SimpleImputer(strategy="most_frequent")),
             ("ohe_encoder", OneHotEncoder(sparse_output=False, handle_unknown='ignore'))
         ])
 
-        # Ordinal categorical
         ord_Pipeline = Pipeline([
             ("imputer", SimpleImputer(strategy="most_frequent")),
             ("oe_encoder", OrdinalEncoder(categories=[ord_categories]))
         ])
 
-        preprocessor = ColumnTransformer([
+        column_transformer = ColumnTransformer([
             ("con_num", con_num_Pipeline, con_num_features),
             ("bin", bin_Pipeline, bin_features),
             ("nom", nom_Pipeline, nom_features),
             ("ord", ord_Pipeline, ord_features)
         ], remainder="drop")
 
-        return preprocessor
+        full_preprocessor = Pipeline([
+            ("clean_columns", MedicalColumnCleaner(oldpeak_col=oldpeak_col,
+                                                   cholesterol_col=cholesterol_col)),
+            ("feature_engineering", column_transformer)
+        ])
 
-    # ------------------------------------------------------------------
-    # Full run – returns NumPy arrays
-    # ------------------------------------------------------------------
+        return full_preprocessor
+
     def run_preprocessing(self, filepath, target_col, resting_bp_col,
                            oldpeak_col, cholesterol_col, continuous_num_features,
                            bin_features, nom_features, ord_features, ord_categories):
-        """
-        Execute all preprocessing and return NumPy arrays.
-        1. Load & split
-        2. Clean invalid values (RestingBP, Oldpeak, Cholesterol zeros)
-        3. Build & apply the ColumnTransformer
-        4. Output arrays
-        """
-        # 1. Load and split
+        """Execute full preprocessing and return NumPy arrays."""
         data = self.load_data(filepath)
         X_train, X_val, y_train, y_val = self.split_data(data, target_col)
 
-        # 2. Clean
-        X_train, X_val, y_train, y_val = self.resting_bp_preprocessor(
-            resting_bp_col, X_train, X_val, y_train, y_val
-        )
-        X_train, X_val = self.oldpeak_preprocessor(oldpeak_col, X_train, X_val)
-        X_train, X_val = self.cholesterol_imputer(cholesterol_col, X_train, X_val)
+        X_train, y_train = self.drop_invalid_resting_bp(X_train, y_train, resting_bp_col)
+        X_val, y_val = self.drop_invalid_resting_bp(X_val, y_val, resting_bp_col)
 
-        # 3. Build and apply transformer
-        self._column_transformer = self.build_preprocessor(
-            continuous_num_features, bin_features,
-            nom_features, ord_features, ord_categories
+        self._full_preprocessor = self.build_preprocessor(
+            continuous_num_features, bin_features, nom_features,
+            ord_features, ord_categories, oldpeak_col, cholesterol_col
         )
 
-        # fit on train, transform both
-        final_X_train = self._column_transformer.fit_transform(X_train)
-        final_X_val = self._column_transformer.transform(X_val)
+        # For ANN we return NumPy arrays directly (training.py expects them)
+        final_X_train = self._full_preprocessor.fit_transform(X_train)
+        final_X_val = self._full_preprocessor.transform(X_val)
 
-        # Convert labels to numpy
-        y_train = y_train.to_numpy()
-        y_val = y_val.to_numpy()
-
-        return final_X_train, final_X_val, y_train, y_val
+        return final_X_train, final_X_val, y_train.to_numpy(), y_val.to_numpy()

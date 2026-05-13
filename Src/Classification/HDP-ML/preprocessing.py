@@ -1,29 +1,75 @@
-from sklearn.preprocessing import LabelEncoder, OneHotEncoder, OrdinalEncoder, StandardScaler
+"""
+Preprocessing module for Heart Disease Prediction (ML).
+
+Provides the preprocessor class that handles:
+- Data loading and splitting
+- Domain-specific medical cleaning (row-level RestingBP removal,
+  column-level Oldpeak clipping, Cholesterol zero → NaN conversion)
+- Building a full scikit-learn preprocessing pipeline (column cleaning +
+  feature engineering with scaling, imputation, encoding)
+- Applying the pipeline to training and validation sets
+"""
+
+from sklearn.preprocessing import OrdinalEncoder, OneHotEncoder, StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.impute import SimpleImputer
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 import pandas as pd
 import numpy as np
+from src_utils import MedicalColumnCleaner
 
 
 class preprocessor:
     """
-    Preprocessing utility that handles data loading, cleaning (outside pipeline),
-    and builds a scikit-learn ColumnTransformer for consistent transformations.
+    Handles all data preparation steps for the heart disease classification task.
+
+    Parameters
+    ----------
+    test_size : float, default=0.15
+        Proportion of the dataset to use as validation.
+    random_state : int, default=42
+        Random seed for reproducibility.
     """
 
     def __init__(self, test_size=0.15, random_state=42):
+        """Initialize with split parameters."""
         self.test_size = test_size
         self.random_state = random_state
-        self._column_transformer = None  # will be built during run_preprocessing
+        self._full_preprocessor = None   # Stores the fitted preprocessing pipeline
 
     def load_data(self, filepath):
-        """Load CSV dataset."""
+        """
+        Load the dataset from a CSV file.
+
+        Parameters
+        ----------
+        filepath : str
+            Path to the CSV file.
+
+        Returns
+        -------
+        pd.DataFrame
+            Loaded dataset.
+        """
         return pd.read_csv(filepath)
 
     def split_data(self, df, target_col):
-        """Split into train/validation sets with stratification."""
+        """
+        Split the dataset into training and validation sets (stratified).
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            Full dataset.
+        target_col : str
+            Name of the target column.
+
+        Returns
+        -------
+        tuple : (X_train, X_val, y_train, y_val)
+            Feature and label DataFrames/Series.
+        """
         X = df.drop(columns=target_col)
         y = df[target_col]
         X_train, X_val, y_train, y_val = train_test_split(
@@ -34,113 +80,171 @@ class preprocessor:
         )
         return X_train, X_val, y_train, y_val
 
-    # ------------------------------------------------------------------
-    # Pre-pipeline cleaning steps (row-level operations)
-    # ------------------------------------------------------------------
-    def resting_bp_preprocessor(self, resting_bp_col, X_train, X_val, y_train, y_val):
-        """Remove rows where RestingBP == 0."""
-        mask_t = X_train[resting_bp_col] != 0
-        mask_v = X_val[resting_bp_col] != 0
+    def drop_invalid_resting_bp(self, X, y, resting_bp_col='RestingBP'):
+        """
+        Remove rows where RestingBP equals 0 (biologically impossible).
 
-        X_train = X_train[mask_t].reset_index(drop=True)
-        y_train = y_train[mask_t].reset_index(drop=True)
-        X_val = X_val[mask_v].reset_index(drop=True)
-        y_val = y_val[mask_v].reset_index(drop=True)
-        return X_train, X_val, y_train, y_val
+        Because this affects both features and labels, it must be done
+        outside the scikit-learn pipeline.
 
-    def oldpeak_preprocessor(self, oldpeak_col, X_train, X_val):
-        """Clip negative Oldpeak values to 0."""
-        X_train[oldpeak_col] = X_train[oldpeak_col].clip(lower=0)
-        X_val[oldpeak_col] = X_val[oldpeak_col].clip(lower=0)
-        return X_train, X_val
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Feature DataFrame.
+        y : pd.Series
+            Target labels.
+        resting_bp_col : str, default='RestingBP'
+            Name of the resting blood pressure column.
 
-    def cholesterol_imputer(self, cholesterol_col, X_train, X_val):
-        """Convert zero cholesterol to NaN (imputation will happen later in the pipeline)."""
-        X_train[cholesterol_col] = X_train[cholesterol_col].replace(0, np.nan)
-        X_val[cholesterol_col] = X_val[cholesterol_col].replace(0, np.nan)
-        return X_train, X_val
+        Returns
+        -------
+        tuple : (X_clean, y_clean)
+            Filtered features and labels.
+        """
+        mask = X[resting_bp_col] != 0
+        return X[mask].reset_index(drop=True), y[mask].reset_index(drop=True)
 
-    # ------------------------------------------------------------------
-    # Pipeline builder
-    # ------------------------------------------------------------------
     def build_preprocessor(self, con_num_features, bin_features,
-                           nom_features, ord_features, ord_categories):
+                           nom_features, ord_features, ord_categories,
+                           oldpeak_col='Oldpeak', cholesterol_col='Cholesterol'):
         """
-        Create the ColumnTransformer that scales, imputes and encodes.
-        Returns the transformer (not fitted).
+        Construct the full preprocessing pipeline.
+
+        Steps:
+        1. MedicalColumnCleaner – clips Oldpeak and converts cholesterol zeros to NaN.
+        2. ColumnTransformer – imputes, scales, and encodes all features.
+
+        Parameters
+        ----------
+        con_num_features : list of str
+            Continuous numerical feature names.
+        bin_features : list of str
+            Binary categorical feature names.
+        nom_features : list of str
+            Nominal categorical feature names.
+        ord_features : list of str
+            Ordinal categorical feature names.
+        ord_categories : list of list
+            Ordered categories for each ordinal feature.
+        oldpeak_col : str, default='Oldpeak'
+            Name of the Oldpeak column.
+        cholesterol_col : str, default='Cholesterol'
+            Name of the Cholesterol column.
+
+        Returns
+        -------
+        full_preprocessor : sklearn.pipeline.Pipeline
+            Unfitted pipeline (cleaner + feature engineering).
         """
-        # Continuous numeric pipeline
+        # Sub-pipeline for continuous numeric features
         con_num_Pipeline = Pipeline([
             ("imputer", SimpleImputer(strategy="median")),
             ("scaler", StandardScaler())
         ])
 
-        # Binary categorical
+        # Sub-pipeline for binary categorical features
         bin_Pipeline = Pipeline([
             ("imputer", SimpleImputer(strategy="most_frequent")),
             ("oe_encoder", OrdinalEncoder())
         ])
 
-        # Nominal categorical
+        # Sub-pipeline for nominal categorical features
         nom_Pipeline = Pipeline([
             ("imputer", SimpleImputer(strategy="most_frequent")),
             ("ohe_encoder", OneHotEncoder(sparse_output=False, handle_unknown='ignore'))
         ])
 
-        # Ordinal categorical
+        # Sub-pipeline for ordinal categorical features
         ord_Pipeline = Pipeline([
             ("imputer", SimpleImputer(strategy="most_frequent")),
             ("oe_encoder", OrdinalEncoder(categories=[ord_categories]))
         ])
 
-        # ColumnTransformer
-        preprocessor = ColumnTransformer([
+        # Column transformer combining all feature pipelines
+        column_transformer = ColumnTransformer([
             ("con_num", con_num_Pipeline, con_num_features),
             ("bin", bin_Pipeline, bin_features),
             ("nom", nom_Pipeline, nom_features),
             ("ord", ord_Pipeline, ord_features)
         ], remainder="drop")
 
-        return preprocessor
+        # Full pipeline: clean columns first, then apply feature engineering
+        full_preprocessor = Pipeline([
+            ("clean_columns", MedicalColumnCleaner(oldpeak_col=oldpeak_col,
+                                                   cholesterol_col=cholesterol_col)),
+            ("feature_engineering", column_transformer)
+        ])
 
-    # ------------------------------------------------------------------
-    # Full run – uses the pipeline after cleaning
-    # ------------------------------------------------------------------
+        return full_preprocessor
+
     def run_preprocessing(self, filepath, target_col, resting_bp_col,
                            oldpeak_col, cholesterol_col, continuous_num_features,
                            bin_features, nom_features, ord_features, ord_categories):
         """
-        Execute the entire preprocessing workflow.
-        Steps:
-        1. Load & split
-        2. Clean invalid values (RestingBP, Oldpeak, Cholesterol)
-        3. Build & apply the preprocessing ColumnTransformer
-        4. Return final DataFrames (with feature names) and labels
+        Execute the entire preprocessing workflow and return final arrays.
+
+        Workflow:
+        1. Load and split the data.
+        2. Remove invalid RestingBP rows (outside pipeline).
+        3. Build the full preprocessing pipeline.
+        4. Fit on training data, transform training and validation sets.
+        5. Convert results to DataFrames with feature names.
+
+        Parameters
+        ----------
+        filepath : str
+            Path to the CSV dataset.
+        target_col : str
+            Name of the target column.
+        resting_bp_col : str
+            Column name for RestingBP.
+        oldpeak_col : str
+            Column name for Oldpeak.
+        cholesterol_col : str
+            Column name for Cholesterol.
+        continuous_num_features : list of str
+            Continuous numeric features to scale.
+        bin_features : list of str
+            Binary categorical features.
+        nom_features : list of str
+            Nominal categorical features.
+        ord_features : list of str
+            Ordinal categorical features.
+        ord_categories : list of list
+            Order of categories for ordinal features.
+
+        Returns
+        -------
+        final_X_train : pd.DataFrame
+            Preprocessed training features.
+        final_X_val : pd.DataFrame
+            Preprocessed validation features.
+        y_train : pd.Series
+            Training labels.
+        y_val : pd.Series
+            Validation labels.
         """
-        # 1. Load and split
+        # 1. Load & split
         data = self.load_data(filepath)
         X_train, X_val, y_train, y_val = self.split_data(data, target_col)
 
-        # 2. Clean
-        X_train, X_val, y_train, y_val = self.resting_bp_preprocessor(
-            resting_bp_col, X_train, X_val, y_train, y_val
-        )
-        X_train, X_val = self.oldpeak_preprocessor(oldpeak_col, X_train, X_val)
-        X_train, X_val = self.cholesterol_imputer(cholesterol_col, X_train, X_val)
+        # 2. Row-level cleaning (RestingBP)
+        X_train, y_train = self.drop_invalid_resting_bp(X_train, y_train, resting_bp_col)
+        X_val, y_val = self.drop_invalid_resting_bp(X_val, y_val, resting_bp_col)
 
-        # 3. Build transformer
-        self._column_transformer = self.build_preprocessor(
-            continuous_num_features, bin_features,
-            nom_features, ord_features, ord_categories
+        # 3. Build the full preprocessing pipeline
+        self._full_preprocessor = self.build_preprocessor(
+            continuous_num_features, bin_features, nom_features,
+            ord_features, ord_categories, oldpeak_col, cholesterol_col
         )
 
-        # Fit on train, transform both
-        X_train_processed = self._column_transformer.fit_transform(X_train)
-        X_val_processed = self._column_transformer.transform(X_val)
+        # 4. Fit on train, transform both
+        final_X_train = self._full_preprocessor.fit_transform(X_train)
+        final_X_val = self._full_preprocessor.transform(X_val)
 
-        # 4. Convert back to DataFrames
-        feature_names = self._column_transformer.get_feature_names_out()
-        final_X_train = pd.DataFrame(X_train_processed, columns=feature_names)
-        final_X_val = pd.DataFrame(X_val_processed, columns=feature_names)
+        # 5. Create DataFrames with proper feature names (optional but nice)
+        feature_names = self._full_preprocessor.get_feature_names_out()
+        final_X_train = pd.DataFrame(final_X_train, columns=feature_names)
+        final_X_val = pd.DataFrame(final_X_val, columns=feature_names)
 
         return final_X_train, final_X_val, y_train, y_val
