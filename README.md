@@ -49,8 +49,8 @@ Heart-Disease-Prediction/
 │   ├── EDA/
 │   │   └── EDA.ipynb
 │   ├── Classification/
-│   │   ├── HDP-ML.ipynb
-│   │   └── HDP-ANN.ipynb
+│   │   ├── HDP-CLA-ML.ipynb
+│   │   └── HDP-CLS-ANN.ipynb
 │   ├── Regression/
 │   │   ├── CH-REG-ML.ipynb
 │   │   └── CH-REG-ANN.ipynb
