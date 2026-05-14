@@ -5,59 +5,81 @@
 ![Scikit--learn](https://img.shields.io/badge/Scikit--learn-1.x-blue?logo=scikit-learn)
 ![Pandas](https://img.shields.io/badge/Pandas-Data%20Analysis-success?logo=pandas)
 ![License](https://img.shields.io/github/license/Nimaabediforud/Heart-Disease-Prediction)
-![Status](https://img.shields.io/badge/Status-Completed-success?style=flat-square)
+![Status](https://img.shields.io/badge/Status-Ongoing-success?style=flat-square)
 
 ---
 
 ## Overview / Objective
 
 This project focuses on predicting whether a patient has heart disease based on clinical and demographic features.
-The project covers:
-- Preprocessing data for both machine learning and artificial neural network models.
-- Scaling continuous features and encoding categorical variables.
-- Training and evaluating multiple traditional machine learning models (Random Forest, Gradient Boosting, AdaBoost, Extra Trees, and Stacking Classifier).
-- Building and training an artificial neural network with hyperparameter tuning and decision threshold adjustments.
-- Comparing model performance using metrics such as F1-score, accuracy, confusion matrix, and classification reports.
+It follows a **structured, pipeline‑based methodology** covering:
 
-The project highlights **the end-to-end workflow of data preprocessing, model building, evaluation, and comparison** for a healthcare prediction task.
+- Preprocessing data for both machine learning and artificial neural network models using **scikit‑learn pipelines** and a custom transformer for domain‑specific cleaning.
+- Scaling continuous features (`StandardScaler` for ML, `MinMaxScaler` for ANN) and encoding categorical variables.
+- Benchmarking multiple traditional machine learning models (Random Forest, Gradient Boosting, AdaBoost, Extra Trees, SVC, Logistic Regression, KNN, Naive Bayes, Gaussian Process) and selecting the best performer.
+- Building and training an artificial neural network with hyperparameter tuning, early stopping, and a custom decision threshold.
+- Comparing model performance using weighted F1‑score, accuracy, confusion matrices, and classification reports.
+
+The project highlights **an end‑to‑end, reproducible workflow for healthcare prediction tasks**, with a strong emphasis on code modularity and educational clarity.
+> The current release focuses on the classification paradigm. Regression and unsupervised learning paradigms are under active development and will follow the same pipeline‑based methodology.
+
+---
+
+## Roadmap / Future Work
+
+- [x] Classification (ML & ANN) – complete, with full pipeline and saved models.
+- [ ] Regression (ML & ANN) – predict continuous medical variables (e.g., Cholesterol) using the same preprocessing framework.
+- [ ] Unsupervised Learning – clustering and pattern discovery without target labels.
+- [ ] Extended evaluation across additional medical datasets to test framework generalizability.
+
+---
 
 ## Project Structure
-
-The project is organized as follows:
 ```
 Heart-Disease-Prediction/
-│
 ├── Data/
-│ └── dataset.csv   # Original heart disease dataset
+│   └── heart-data.csv
 │
 ├── Models/
-│ └── trained models # Saved machine learning and ANN 
+│   ├── Classification/     # fully implemented
+│   ├── Regression/         # under development
+│   └── Unsupervised/       # planned
 │
 ├── Notebooks/
-│ ├── EDA.ipynb   # Exploratory Data Analysis
-│ ├── HDP-ML.ipynb   # Traditional Machine Learning workflow
-│ ├── HDP-ANN.ipynb   # Artificial Neural Network workflow
-│ └── utils.py   # Utility functions used across notebooks
+│   ├── EDA/
+│   │   └── EDA.ipynb
+│   ├── Classification/
+│   │   ├── HDP-ML.ipynb
+│   │   └── HDP-ANN.ipynb
+│   ├── Regression/
+│   │   ├── CH-REG-ML.ipynb
+│   │   └── CH-REG-ANN.ipynb
+│   ├── Unsupervised/
+│   │
+│   └── utils.py                         # shared utilities (outlier/skewness detectors, DataCleaner)
 │
 ├── Src/
-│ ├── HDP-ML/
-│ │ ├── init.py
-│ │ ├── preprocessing.py
-│ │ └── training.py
-│ └── HDP-ANN/
-│ ├── init.py
-│ ├── preprocessing.py
-│ └── training.py
+│   ├── Classification/
+│   │   ├── HDP-ML/
+│   │   │   ├── __init__.py
+│   │   │   ├── preprocessing.py
+│   │   │   └── training.py
+│   │   └── HDP-ANN/
+│   │       ├── __init__.py
+│   │       ├── preprocessing.py
+│   │       └── training.py
+│   ├── Regression/                      # (future) regression source code
+│   ├── Unsupervised/                    # (future) unsupervised source code
+│   └── src_utils.py                     # shared custom transformer (MedicalColumnCleaner)
 │
-├── README.md   # Project documentation
-├── requirements.txt   # Project dependencies
-└── LICENSE   # License for the project
+├── .gitignore
+├── LICENSE
+├── README.md
+└── requirements.txt
 ```
+---
+
 ## Data Description
-
-The project uses a dataset containing patient information and heart disease indicators. The dataset is provided as a CSV file located in the `data/` folder. It includes both numerical and categorical features that describe patient demographics, medical history, and clinical measurements.  
-
-### Key Features:
 
 - **Numerical Features:**
   - Continuous variables such as `Age`, `RestingBP`, `Cholesterol`, `Oldpeak`, `MaxHR`.
@@ -73,61 +95,66 @@ The project uses a dataset containing patient information and heart disease indi
 
 > Note: Some features require preprocessing to handle missing or invalid values. For example, `RestingBP` values of 0 are replaced, `Oldpeak` negative values are corrected, and missing `Cholesterol` values are imputed using the median.
 
+
+---
+
 ## Key Features & Highlights
 
 - **Comprehensive Heart Disease Prediction:**  
-  Implements both traditional machine learning models and artificial neural networks to predict the presence of heart disease based on patient features.
+  Implements both traditional machine learning models and an artificial neural network using a **unified preprocessing pipeline**.
 
-- **Data Preprocessing:**  
-  - Scaling of continuous features using `StandardScaler` & `MinMaxScaler`.  
-  - Encoding of categorical features (binary, nominal, and ordinal).  
-  - Handling of missing or incorrect values in key medical features.
-  
-    > I tried to handle each step `manually` to better understand how different preprocessing techniques work and how they affect the data and the model’s performance. I wanted to experiment with them myself and learn how to manage data transformations and scaling without relying on ready-to-use tools(scikit-learn `Pipeline` / `ColumnTransformer`). I also wrote a couple of custom classes for preprocessing(within `src/HDP-ML/preprocessing.py` and `src/HDP-ANN/preprocessing.py`), just to practice how these processes can be built from scratch in code. Of course, the easiest and most professional way to handle this would be to use **pipelines**; In fact, That's what should be done. I kept it manual to focus more on the learning process and the details behind each step.
+- **Professional Data Preprocessing:**  
+  - **Domain‑specific cleaning** via a custom `MedicalColumnCleaner` transformer that clips impossible values (Oldpeak) and marks missing cholesterol values for imputation.  
+  - Row‑level cleaning (removing patients with `RestingBP == 0`) is handled explicitly outside the pipeline because it affects both features and labels.  
+  - Scaling of continuous features using `StandardScaler` (ML) or `MinMaxScaler` (ANN).  
+  - Encoding of categorical features (binary, nominal, ordinal) inside a `ColumnTransformer`.  
+  - All transformations are bundled into a **scikit‑learn `Pipeline`**, ensuring reproducibility and preventing data leakage.
 
 - **Machine Learning Models (HDP-ML):**  
-  - Stacking Classifier combining Random Forest, Gradient Boosting, AdaBoost, Extra Trees, and SVC.  
-  - Trained and evaluated with F1 score, classification report, and confusion matrix metrics.
+  - Benchmarking of 11 classifiers with consistent evaluation.  
+  - Final model: a **Stacking Classifier** combining Random Forest, Gradient Boosting, AdaBoost, Extra Trees, and SVC, with a Logistic Regression meta‑learner.  
+  - The entire preprocessing + model pipeline is saved as a single `.joblib` file for immediate deployment.
 
 - **Artificial Neural Networks (HDP-ANN):**  
-  - Flexible architecture with multiple hidden layers and dropout for regularization.  
-  - Customizable decision threshold to balance sensitivity and specificity.  
-  - Early stopping to prevent overfitting during training.
+  - Multi‑layer feedforward architecture (16 → 16 → dropout 0.3 → 1 sigmoid).  
+  - Trained with early stopping and model checkpointing.  
+  - Custom decision threshold (0.45) to balance false negatives and false positives.  
+  - Preprocessing pipeline saved separately to be combined with the Keras model during inference.
 
 - **Evaluation Metrics:**  
-  - F1 Score (weighted)  
-  - Accuracy  
-  - Confusion Matrix  
-  - Detailed classification reports
+  - Weighted F1‑score, accuracy, confusion matrix, and full classification reports for both approaches.
 
 - **Organized Codebase:**  
-  - Clear separation of preprocessing, training, and evaluation code for ML and ANN workflows.  
-  - Notebooks for EDA, ML, and ANN experiments.  
-  - Reusable utility functions.
+  - Clear separation of concerns: preprocessing, training, and evaluation are modularised in `src/` and notebooks.  
+  - Reusable utility functions and a shared custom transformer across both paradigms.
+
+---
 
 ## How to Use / Run the Project
 
 1. **Prepare the Dataset:**  
-   Place the dataset CSV file in the `data/` folder.
+   Place the dataset CSV file in the `Data/` folder.
 
-2. **Preprocessing:**  
-   Use the preprocessing scripts in `Src/HDP-ML/preprocessing.py` and `Src/HDP-ANN/preprocessing.py` to process the data.  
-   This includes scaling continuous features, encoding categorical features, and handling missing or invalid values.
+2. **Exploratory Data Analysis:**  
+   Open `Notebooks/EDA.ipynb` to explore data distributions, outliers, and skewness.
 
-3. **Training the Models:**  
-   - For traditional ML models, use the training scripts in `Src/HDP-ML/training.py`.  
-   - For neural networks, use the scripts in `Src/HDP-ANN/training.py`.  
+3. **Run the ML Pipeline:**  
+   - Open `Notebooks/classification/HDP-ML.ipynb`.  
+   - Execute cells sequentially to perform row‑level cleaning, build the preprocessing pipeline, benchmark multiple models, train the final stacking ensemble, and evaluate it.  
+   - The trained pipeline is saved automatically to `Models/classification/`.
 
-4. **Evaluation:**  
-   Evaluate models using the provided evaluation functions. Metrics include F1 Score, accuracy, confusion matrix, and classification reports.
+4. **Run the ANN Pipeline:**  
+   - Open `Notebooks/classification/HDP-ANN.ipynb`.  
+   - Execute cells to apply the same cleaning, build the ANN‑specific pipeline (with `MinMaxScaler`), train the neural network, and evaluate.  
+   - The fitted preprocessor and Keras model are saved for future use.
 
-5. **Exploration:**  
-   For exploratory data analysis, refer to the notebooks in `notebooks/`:
-   - `EDA.ipynb` – basic data exploration and visualization.
-   - `HDP-ML.ipynb` – ML model experiments.
-   - `HDP-ANN.ipynb` – ANN model experiments.
+5. **Use the Source Code Directly:**  
+   - Import the `preprocessor` and `trainer` classes from `Src/HDP-ML` or `Src/HDP-ANN` for programmatic use.  
+   - Example usage is shown in the notebooks and can be adapted to scripts.
 
-> Note: The project is designed to work with the provided dataset. No additional configuration or installations are strictly required beyond the listed dependencies.
+> **Note:** The project is designed to work with the provided dataset. All required dependencies are listed in `requirements.txt`.
+
+---
 
 ## Conclusion and Results Comparison
 
@@ -139,10 +166,12 @@ In this project, we implemented two approaches to predict whether a patient has 
    - These models performed very well despite the relatively small size of the dataset, showing strong generalization capabilities.
 
 2. **Artificial Neural Network (HDP-ANN)**
-   - Architecture: Multi-layer feedforward network with two hidden layers (16 units and 8 units) and dropout of 0.3 to prevent overfitting.
+   - Architecture: Multi-layer feedforward network with two hidden layers (16 units and 16 units) and dropout of 0.3 to prevent overfitting.
    - Training: 30 epochs with early stopping based on validation loss.
    - Evaluation: After converting predicted probabilities to binary labels using a 0.45 decision threshold, the ANN achieved a **weighted F1 score of ~87%**.
    - Confusion matrix analysis helped fine-tune the decision threshold, reducing false negatives while keeping false positives at an acceptable level.
+
+---
 
 ### Key Observations:
 
@@ -151,6 +180,9 @@ In this project, we implemented two approaches to predict whether a patient has 
 - The neural network provides flexibility for future expansion or integration of additional features or data, while traditional ML remains robust and efficient for smaller datasets.
 
 > Overall, this project demonstrates the effectiveness of both traditional ML models and neural networks in predicting heart disease, highlighting preprocessing, feature engineering, and model evaluation strategies.
+
+
+---
 
 ## References / Acknowledgments
 
