@@ -84,3 +84,25 @@ stage2_results = {
         }
     }
 }
+
+
+# REG-ANN-EXT2.ipynb & REG-ML-EXT2.ipynb -> results of model evaluation on the test set for both ML and ANN
+comparison = {
+    "Model": [
+        "Ridge Regression",
+        "Artificial Neural Network"
+    ],
+    "R²": [
+        0.8825,
+        0.8425
+    ],
+    "MAE": [
+        2298.73,
+        2278.55
+    ],
+    "RMSE": [
+        4230.34,
+        4897.56
+    ]
+}
+
