@@ -4,7 +4,6 @@
 ![TensorFlow](https://img.shields.io/badge/TensorFlow-2.x-orange?logo=tensorflow&logoColor=white)
 ![Scikit--learn](https://img.shields.io/badge/Scikit--learn-1.x-blue?logo=scikit-learn)
 ![Pandas](https://img.shields.io/badge/Pandas-Data%20Analysis-success?logo=pandas)
-![License](https://img.shields.io/github/license/Nimaabediforud/Medical-Healthcare-Prediction-Framework)
 ![Status](https://img.shields.io/badge/Status-Ongoing-success?style=flat-square)
 
 ---
@@ -138,3 +137,4 @@ Medical-Healthcare-Prediction-Framework/
 - Medical Cost Regression (Machine Learning)
 - Medical Cost Regression (Artificial Neural Networks)
 - Comparative Analysis Notebook
+
