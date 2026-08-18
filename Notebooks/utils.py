@@ -230,7 +230,7 @@ class CorrelationAnalyzer:
         plt.tight_layout()
         plt.show()
 
-    def plot_feature_numeric_target(self):
+    def plot_feature_numeric_target(self, annot_size):
         """
         Feature ↔ Target associations.
 
@@ -288,7 +288,8 @@ class CorrelationAnalyzer:
                 annot=True,
                 cmap='coolwarm',
                 center=0,
-                ax=axes[plot_idx]
+                ax=axes[plot_idx],
+                annot_kws={"size": annot_size}
             )
 
             axes[plot_idx].set_title(
@@ -323,7 +324,8 @@ class CorrelationAnalyzer:
                 cmap='YlGnBu',
                 vmin=0,
                 vmax=1,
-                ax=axes[plot_idx]
+                ax=axes[plot_idx],
+                annot_kws={"size": annot_size}
             )
 
             axes[plot_idx].set_title(
